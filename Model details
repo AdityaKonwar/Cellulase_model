@@ -1,0 +1,113 @@
+Model Details
+
+Edit
+Model Summary
+A Random Forest Regressor trained to predict cellulase enzyme yield (Max FPU/mL) from Trichoderma fermentation parameters (e.g., temperature, pH, dissolved oxygen). The model is an ensemble of 300 decision trees, optimized for interpretability and robustness with small-to-medium datasets.
+
+Key Features:
+Input: 5–10 fermentation parameters (e.g., Min_DO (%), Avg pH, Total Feed (mL)).
+
+Output: Continuous prediction of Max FPU/mL.
+
+Strengths: Handles nonlinear relationships, provides feature importance scores.
+
+Limitations: Cannot extrapolate beyond training data ranges.
+
+Usage
+from joblib import load import pandas as pd model = load('random_forest_model.joblib') # or .pkl X_new = pd.DataFrame([[28.5, 5.2, 40, 500, 500]], # Example input columns=['Avg Temp (°C)', 'Avg pH', 'Min_DO (%)', 'Max Agitation (RPM)', 'Total Feed (mL)']) y_pred = model.predict(X_new) # Shape: (n_samples,) print(f"Predicted Yield: {y_pred[0]:.2f} FPU/mL") Input/Output Shapes Input: 2D array/DataFrame of shape (n_samples, n_features) (e.g., (1, 5) for a single run).
+
+Output: 1D array of shape (n_samples,) (e.g., [12.34]).
+
+Known Failures Mismatched Features: Input must match training feature names/order.
+
+Missing Values: Fails if NaNs are present (impute first).
+
+System
+Standalone Model: Deployed as a microservice (Flask/FastAPI) or integrated into lab control systems.
+
+Input Requirements:
+Numeric values within training ranges (e.g., DO: 20–80%).
+
+Downstream Dependencies:
+
+Predictions guide fermentation protocol adjustments or scale-up decisions.
+
+Implementation requirements
+Hardware/Software
+Training: Laptop/desktop (CPU-only, no GPU needed).
+
+Library Versions: scikit-learn>=1.0, pandas, joblib.
+
+Inference: Minimal compute (runs on Raspberry Pi).
+
+Performance
+Training Time: ~10 seconds for 300 trees on 500 samples.
+
+Inference Latency: <10 ms per prediction.
+
+Model Size: ~10 MB (uncompressed .joblib).
+
+Model Characteristics
+Initialization
+Trained from scratch (no pretraining).
+
+Model Stats
+Size: 300 trees, ~5 KB per tree → ~1.5 MB total.
+
+Latency: ~5 ms per prediction (Intel i5 CPU).
+
+Optimizations: None (no pruning/quantization).
+
+Data Overview
+Training Data
+Source: 300+ lab-scale (5L) fermentation runs.
+
+Features:
+
+Process parameters (Temp, pH, DO, Feed).
+
+Physicochemical measurements (OD600, residual substrate).
+
+Preprocessing:
+
+Min-max scaling for numerical features.
+
+Handled missing values via median imputation.
+
+Evaluation data
+Split: 80% train, 20% test (stratified by contamination status).
+
+Notable Differences: Test set included edge cases (e.g., high/low pH).
+
+Evaluation Results
+Summary
+R²: 0.92 (test set).
+
+MSE: 0.85 FPU/mL.
+
+Feature Importance: Min_DO (%) (45%), Avg pH (30%), Temp (15%).
+
+Subgroup evaluation results
+Contaminated Runs: 10% lower accuracy (R² = 0.85).
+
+Preventable Failures:
+
+Predictions unreliable for DO < 20% (outside training range).
+
+Fairness
+Definition: Consistent performance across process conditions (e.g., pH 4.5–6.0).
+
+Baseline: Compared to manual DOE (design of experiments).
+
+Results: No bias detected for operational ranges.
+
+Usage limitations
+Sensitive Use Cases: Not for clinical/diagnostic purposes.
+
+Performance Limits:
+
+Fails if input features are outside training ranges.
+
+Assumes similar strain/media composition.
+
+
